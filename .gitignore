@@ -1,6 +1,8 @@
 
 # Misc. System Files
 *.swp
+*.tmp
+*.bak
 
 # Build directory
 /build
