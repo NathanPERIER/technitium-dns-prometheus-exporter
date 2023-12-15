@@ -1,7 +1,9 @@
 
+export type PrometheusMetricValue = [{[key: string]: string}, number | string]
+
 export class PrometheusMetricGroup {
 
-    public constructor(private name: string, private description: string, private values: [{[key: string]: string}, number | string][] = []) { }
+    public constructor(private name: string, private description: string, private values: PrometheusMetricValue[] = []) { }
 
     public add_value(value: number | string, labels: {[key: string]: string} = {}): void {
         this.values.push([labels, value]);
