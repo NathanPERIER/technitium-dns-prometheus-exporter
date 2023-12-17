@@ -1,6 +1,5 @@
 
 import axios from 'axios';
-import path from 'path';
 
 import { ApiStatus, MetricsPoint } from './datastruct/metrics_point.js';
 
@@ -38,7 +37,11 @@ type MetricsResponse = {
 
 async function get_raw_body(base_path: string, token: string): Promise<[ApiStatus,MetricsResponse?]> {
     try {
-        const rsp = await axios.get<{status: string, response: MetricsResponse}>(path.join(base_path, API_METRICS_PATH), {
+        if(!base_path.endsWith('/')) {
+            base_path += '/';
+        }
+        const url = base_path + API_METRICS_PATH;
+        const rsp = await axios.get<{status: string, response: MetricsResponse}>(url, {
             params: { 'token': token, 'type': 'lastHour', 'utc': 'true' },
             validateStatus: null
         });
