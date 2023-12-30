@@ -47,3 +47,13 @@ export TECHNITIUM_API_DNS_BASE_URL='...'
 export TECHNITIUM_API_DNS_TOKEN='...'
 npm run dev
 ```
+
+## Dashboard integration
+
+Enclosed with this repository is a [sample dashboard](grafana-dashboard.json) that uses most of the metrics from this exporter. Here is what it can look like :
+
+![general section of the dashboard](images/grafana-1.png)
+
+![blocking and result sections of the dashboard](images/grafana-2.png)
+
+![resolving and caching sections of the dashboard](images/grafana-3.png)
