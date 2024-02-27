@@ -1,5 +1,5 @@
 
-import { TechnitiumServer } from "src/technitium-dns/datastruct/sever.js";
+import { TechnitiumServer } from "../technitium-dns/server.js";
 
 const defaults: {[name: string]: string} = {
 	'TECHNITIUM_EXPORTER_REQUIRE_AUTHENTICATION': 'false',
@@ -42,16 +42,12 @@ function read_servers_from_env(): TechnitiumServer[] {
 			console.warn(`Missing environment variable ${server_token_var} for server at ${server_url} (skipping)`);
 			continue;
 		}
-		let server: TechnitiumServer = {
-			label: server_id.toLowerCase(),
-			base_url: server_url,
-			token: process.env[server_token_var]!
-		};
+		let server_label = server_id.toLowerCase();
 		const server_label_var = `TECHNITIUM_API_${server_id}_LABEL`;
 		if(server_label_var in process.env) {
-			server.label = process.env[server_label_var]!;
+			server_label = process.env[server_label_var]!;
 		}
-		res.push(server);
+		res.push(new TechnitiumServer(server_label, server_url, process.env[server_token_var]!));
 	}
 	if(res.length === 0) {
 		throw Error('Found no valid server definition');

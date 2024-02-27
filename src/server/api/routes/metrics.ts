@@ -1,9 +1,9 @@
 import app from '../../core.js';
-import { fetch_from_api } from '../../../technitium-dns/requests.js';
-import { ApiStatus, MetricsPoint } from '../../../technitium-dns/datastruct/metrics_point.js';
-import { SERVERS } from '../../../utils/env.js';
 import { PrometheusMetricValue, PrometheusDocument } from '../../../prometheus/builder.js';
-import { TechnitiumServer } from 'src/technitium-dns/datastruct/sever.js';
+import { TechnitiumServer, ApiStatus } from '../../../technitium-dns/server.js';
+import { MetricsPoint } from '../../../technitium-dns/metrics_point.js';
+import { fetch_from_api } from '../../../technitium-dns/requests.js';
+import { SERVERS } from '../../../utils/env.js';
 
 
 interface server_point {
@@ -71,7 +71,7 @@ app.get('/metrics', async (_req, res) => {
 
     let metric_points: server_point[] = [];
     for(const server of SERVERS) {
-        metric_points.push({ server: server, point: await fetch_from_api(server.base_url, server.token) });
+        metric_points.push({ server: server, point: await fetch_from_api(server) });
     }
 
     const document = convert_points(metric_points);

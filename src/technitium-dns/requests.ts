@@ -1,92 +1,11 @@
 
-import axios from 'axios';
 
-import { ApiStatus, MetricsPoint } from './datastruct/metrics_point.js';
-
-
-const API_METRICS_PATH = 'api/dashboard/stats/get';
-const API_UPDATE_PATH = 'api/user/checkForUpdate';
+import { MetricsPoint } from './metrics_point.js';
+import { TechnitiumServer, ApiStatus } from './server.js';
 
 
-type ChartDataLabelsIn = {
-    labels: string[],
-    datasets: {
-        label: string,
-        data: number[]
-    }[]
-}
-
-type ChartDataLabelsTop = {
-    labels: string[],
-    datasets: {
-        data: number[]
-    }[]
-}
-
-type MetricsResponse = {
-    stats: {
-        totalQueries:       number,
-        totalNoError:       number,
-        totalServerFailure: number,
-        totalNxDomain:      number,
-        totalRefused:       number,
-        totalAuthoritative: number,
-        totalRecursive:     number,
-        totalCached:        number,
-        totalBlocked:       number,
-        totalClients:       number,
-        zones:              number,
-        cachedEntries:      number,
-        allowedZones:       number,
-        blockedZones:       number,
-        allowListZones:     number,
-        blockListZones:     number,
-    },
-    mainChartData: ChartDataLabelsIn,
-    queryTypeChartData: ChartDataLabelsTop,
-    protocolTypeChartData: ChartDataLabelsTop
-};
-
-type UpdateResponse = {
-    updateAvailable: boolean,
-	currentVersion?: string,
-	updateVersion?: string
-};
-
-
-async function get_raw_body<RetType>(base_path: string, path: string, token: string, additional_params: { [key: string]: string } = {}): Promise<[ApiStatus,RetType?]> {
-    if(!base_path.endsWith('/')) {
-        base_path += '/';
-    }
-    const url = base_path + path;
-    try {
-        const rsp = await axios.get<{status: string, response: RetType}>(url, {
-            params: { 'token': token, ...additional_params },
-            validateStatus: null
-        });
-        if(rsp.status < 200 || rsp.status >= 300) {
-            console.error(`Got HTTP return code ${rsp.status} ${rsp.statusText} on request to "${url}"`);
-            return [ApiStatus.HTTP_ERROR, undefined];
-        }
-        const body = rsp.data;
-        if(body.status != 'ok') {
-            console.warn(`Got error status "${rsp.status}" from API on request to "${url}"`);
-            return [ApiStatus.API_ERROR, undefined];
-        }
-        return [ApiStatus.OK, body.response];
-    } catch (err) {
-        if(err instanceof axios.AxiosError) {
-            console.warn(`Got error from Axios during a request to "${url}" : ${err.message}`);
-        } else {
-            console.warn(`Got unknown error of type ${typeof err} during a request to "${url}"`);
-        }
-        return [ApiStatus.UNREACHABLE, undefined];
-    }
-}
-
-
-export async function fetch_from_api(base_path: string, token: string): Promise<MetricsPoint> {
-    let res: MetricsPoint = {
+function make_metric_point(): MetricsPoint {
+    return {
         status: ApiStatus.OK,
         update_available: -1,
         nb_clients: 0,
@@ -116,12 +35,17 @@ export async function fetch_from_api(base_path: string, token: string): Promise<
         },
         records: new Map<string, number>()
     };
-    const [status, response] = await get_raw_body<MetricsResponse>(base_path, API_METRICS_PATH, token, {'type': 'lastHour', 'utc': 'true'});
+}
+
+
+export async function fetch_from_api(server: TechnitiumServer): Promise<MetricsPoint> {
+    let res: MetricsPoint = make_metric_point();
+    const [status, response] = await server.get_raw_metrics();
     res.status = status;
     if(res.status !== ApiStatus.OK) {
         return res;
     }
-    const [update_status, update_response] = await get_raw_body<UpdateResponse>(base_path, API_UPDATE_PATH, token);
+    const [update_status, update_response] = await server.get_raw_update();
     if(update_status === ApiStatus.OK) {
         res.update_available = update_response!.updateAvailable ? 1 : 0;
     }
@@ -167,6 +91,6 @@ export async function fetch_from_api(base_path: string, token: string): Promise<
         res.records.set(label, record_data.datasets[0].data[i]);
     });
     const date = chart_data.labels[chart_data.labels.length - 2];
-    console.info(`Request to ${base_path} completed, got point for ${date}`);
+    console.info(`Request to ${server.base_url} completed, got point for ${date}`);
     return res;
 };

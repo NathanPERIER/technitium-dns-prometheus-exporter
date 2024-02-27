@@ -1,11 +1,7 @@
 
 
-export enum ApiStatus {
-    OK = 0,
-    UNREACHABLE = 1,
-    HTTP_ERROR = 2,
-    API_ERROR = 3
-}
+import { ApiStatus } from './server.js';
+
 
 export interface MetricsPoint {
     status: ApiStatus,
