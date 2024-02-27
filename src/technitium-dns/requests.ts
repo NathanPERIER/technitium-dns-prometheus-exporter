@@ -85,12 +85,13 @@ export async function fetch_from_api(base_path: string, token: string): Promise<
             authoritative: 0,
             recursive: 0,
             cached: 0,
-            blocked: 0
+            blocked: 0,
+            dropped: 0
         }
     };
     const [status, response] = await get_raw_body(base_path, token);
     res.status = status;
-    if(res.status != ApiStatus.OK) {
+    if(res.status !== ApiStatus.OK) {
         return res;
     }
     const stats = response!.stats;
@@ -113,6 +114,7 @@ export async function fetch_from_api(base_path: string, token: string): Promise<
             case 'Recursive':      res.hits.recursive = val;      break;
             case 'Cached':         res.hits.cached = val;         break;
             case 'Blocked':        res.hits.blocked = val;        break;
+            case 'Dropped':        res.hits.dropped = val;        break;
             case 'Clients':        res.nb_clients = val;          break;
             default: console.warn(`Got unknown chart point type ${dataset_points.label}`);
         }

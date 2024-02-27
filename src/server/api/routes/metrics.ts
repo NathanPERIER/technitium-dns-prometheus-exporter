@@ -45,7 +45,8 @@ function convert_points(srv_points: server_point[]): PrometheusDocument {
         [ {'server': sp.server.label, 'result': 'authoritative'}, sp.point.hits.authoritative ],
         [ {'server': sp.server.label, 'result': 'recursive'    }, sp.point.hits.recursive     ],
         [ {'server': sp.server.label, 'result': 'cached'       }, sp.point.hits.cached        ],
-        [ {'server': sp.server.label, 'result': 'blocked'      }, sp.point.hits.blocked       ]
+        [ {'server': sp.server.label, 'result': 'blocked'      }, sp.point.hits.blocked       ],
+        [ {'server': sp.server.label, 'result': 'dropped'      }, sp.point.hits.dropped       ]
     ] as PrometheusMetricValue[] ).flat());
 
     return document;

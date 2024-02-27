@@ -24,6 +24,7 @@ export interface MetricsPoint {
         authoritative: number,
         recursive: number,
         cached: number,
-        blocked: number
+        blocked: number,
+        dropped: number
     }
 };
