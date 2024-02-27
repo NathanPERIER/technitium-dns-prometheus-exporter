@@ -24,6 +24,8 @@ function convert_points(srv_points: server_point[]): PrometheusDocument {
         return document;
     }
 
+    document.add_group('technitium_dns_update_available', 'Indicates if there is an update for the DNS server (-1 for unknown).', srv_points.map( sp => [{'server': sp.server.label}, sp.point.update_available] ));
+
     document.add_group('technitium_dns_client_count', 'Number of clients using the DNS.', srv_points.map( sp => [{'server': sp.server.label}, sp.point.nb_clients] ));
 
     document.add_group('technitium_dns_zone_count', 'Number of zones managed by the DNS.', srv_points.map( sp => [{'server': sp.server.label}, sp.point.nb_zones] ));

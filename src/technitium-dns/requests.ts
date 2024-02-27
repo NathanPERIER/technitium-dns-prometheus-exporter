@@ -5,6 +5,7 @@ import { ApiStatus, MetricsPoint } from './datastruct/metrics_point.js';
 
 
 const API_METRICS_PATH = 'api/dashboard/stats/get';
+const API_UPDATE_PATH = 'api/user/checkForUpdate';
 
 
 type ChartDataLabelsIn = {
@@ -46,42 +47,48 @@ type MetricsResponse = {
     protocolTypeChartData: ChartDataLabelsTop
 };
 
+type UpdateResponse = {
+    updateAvailable: boolean,
+	currentVersion?: string,
+	updateVersion?: string
+};
 
-async function get_raw_body(base_path: string, token: string): Promise<[ApiStatus,MetricsResponse?]> {
+
+async function get_raw_body<RetType>(base_path: string, path: string, token: string, additional_params: { [key: string]: string } = {}): Promise<[ApiStatus,RetType?]> {
+    if(!base_path.endsWith('/')) {
+        base_path += '/';
+    }
+    const url = base_path + path;
     try {
-        if(!base_path.endsWith('/')) {
-            base_path += '/';
-        }
-        const url = base_path + API_METRICS_PATH;
-        const rsp = await axios.get<{status: string, response: MetricsResponse}>(url, {
-            params: { 'token': token, 'type': 'lastHour', 'utc': 'true' },
+        const rsp = await axios.get<{status: string, response: RetType}>(url, {
+            params: { 'token': token, ...additional_params },
             validateStatus: null
         });
         if(rsp.status < 200 || rsp.status >= 300) {
-            console.error(`Got HTTP return code ${rsp.status} ${rsp.statusText} on request to "${base_path}"`);
+            console.error(`Got HTTP return code ${rsp.status} ${rsp.statusText} on request to "${url}"`);
             return [ApiStatus.HTTP_ERROR, undefined];
         }
         const body = rsp.data;
         if(body.status != 'ok') {
-            console.warn(`Got error status "${rsp.status}" from API on request to "${base_path}"`);
+            console.warn(`Got error status "${rsp.status}" from API on request to "${url}"`);
             return [ApiStatus.API_ERROR, undefined];
         }
         return [ApiStatus.OK, body.response];
     } catch (err) {
         if(err instanceof axios.AxiosError) {
-            console.warn(`Got error from Axios during a request to "${base_path}" : ${err.message}`);
+            console.warn(`Got error from Axios during a request to "${url}" : ${err.message}`);
         } else {
-            console.warn(`Got unknown error of type ${typeof err} during a request to "${base_path}"`);
+            console.warn(`Got unknown error of type ${typeof err} during a request to "${url}"`);
         }
         return [ApiStatus.UNREACHABLE, undefined];
     }
-    
 }
 
 
 export async function fetch_from_api(base_path: string, token: string): Promise<MetricsPoint> {
     let res: MetricsPoint = {
         status: ApiStatus.OK,
+        update_available: -1,
         nb_clients: 0,
         cached_entries: 0,
         nb_zones: 0,
@@ -109,10 +116,14 @@ export async function fetch_from_api(base_path: string, token: string): Promise<
         },
         records: new Map<string, number>()
     };
-    const [status, response] = await get_raw_body(base_path, token);
+    const [status, response] = await get_raw_body<MetricsResponse>(base_path, API_METRICS_PATH, token, {'type': 'lastHour', 'utc': 'true'});
     res.status = status;
     if(res.status !== ApiStatus.OK) {
         return res;
+    }
+    const [update_status, update_response] = await get_raw_body<UpdateResponse>(base_path, API_UPDATE_PATH, token);
+    if(update_status === ApiStatus.OK) {
+        res.update_available = update_response!.updateAvailable ? 1 : 0;
     }
     const stats = response!.stats;
     res.cached_entries = stats.cachedEntries;

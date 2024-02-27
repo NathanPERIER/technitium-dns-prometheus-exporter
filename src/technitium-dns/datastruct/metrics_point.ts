@@ -9,6 +9,7 @@ export enum ApiStatus {
 
 export interface MetricsPoint {
     status: ApiStatus,
+    update_available: number,
     nb_zones: number,
     cached_entries: number,
     blocked_zones: number,
