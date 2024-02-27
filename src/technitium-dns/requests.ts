@@ -6,6 +6,22 @@ import { ApiStatus, MetricsPoint } from './datastruct/metrics_point.js';
 
 const API_METRICS_PATH = 'api/dashboard/stats/get';
 
+
+type ChartDataLabelsIn = {
+    labels: string[],
+    datasets: {
+        label: string,
+        data: number[]
+    }[]
+}
+
+type ChartDataLabelsTop = {
+    labels: string[],
+    datasets: {
+        data: number[]
+    }[]
+}
+
 type MetricsResponse = {
     stats: {
         totalQueries:       number,
@@ -25,13 +41,9 @@ type MetricsResponse = {
         allowListZones:     number,
         blockListZones:     number,
     },
-    mainChartData: {
-        labels: string[],
-        datasets: {
-            label: string,
-            data: number[]
-        }[]
-    }
+    mainChartData: ChartDataLabelsIn,
+    queryTypeChartData: ChartDataLabelsTop,
+    protocolTypeChartData: ChartDataLabelsTop
 };
 
 
@@ -87,7 +99,15 @@ export async function fetch_from_api(base_path: string, token: string): Promise<
             cached: 0,
             blocked: 0,
             dropped: 0
-        }
+        },
+        protocols: {
+            udp: 0,
+            tcp: 0,
+            tls: 0,
+            https: 0,
+            quic: 0
+        },
+        records: new Map<string, number>()
     };
     const [status, response] = await get_raw_body(base_path, token);
     res.status = status;
@@ -119,6 +139,22 @@ export async function fetch_from_api(base_path: string, token: string): Promise<
             default: console.warn(`Got unknown chart point type ${dataset_points.label}`);
         }
     }
+    const protocol_data = response!.protocolTypeChartData;
+    for(let i = 0; i < protocol_data.labels.length; i++) {
+        const val = protocol_data.datasets[0].data[i];
+        switch(protocol_data.labels[i]) {
+            case 'Udp':   res.protocols.udp = val;   break;
+            case 'Tcp':   res.protocols.tcp = val;   break;
+            case 'Tls':   res.protocols.tls = val;   break;
+            case 'Https': res.protocols.https = val; break;
+            case 'Quic':  res.protocols.quic = val;  break;
+            default: console.warn(`Got unknown query type/protocol ${protocol_data.labels[i]}`);
+        }
+    }
+    const record_data = response!.queryTypeChartData;
+    record_data.labels.forEach((label, i) => {
+        res.records.set(label, record_data.datasets[0].data[i]);
+    });
     const date = chart_data.labels[chart_data.labels.length - 2];
     console.info(`Request to ${base_path} completed, got point for ${date}`);
     return res;

@@ -49,6 +49,18 @@ function convert_points(srv_points: server_point[]): PrometheusDocument {
         [ {'server': sp.server.label, 'result': 'dropped'      }, sp.point.hits.dropped       ]
     ] as PrometheusMetricValue[] ).flat());
 
+    document.add_group('technitium_dns_query_protocol_count', 'Number of requests to the DNS using a given protocol during the past hour.', srv_points.map(sp =>
+        Object.entries(sp.point.protocols).map(([protocol, count]) =>
+            [ {'server': sp.server.label, 'protocol': protocol}, count ]
+        ) as PrometheusMetricValue[]
+    ).flat());
+
+    document.add_group('technitium_dns_record_type_count', 'Number of records responded by the DNS server for a given type during the past hour.', srv_points.map(sp =>
+        sp.point.records.map((record_type: string, count: number) =>
+            [ {'server': sp.server.label, 'record_type': record_type}, count ]
+        ) as PrometheusMetricValue[]
+    ).flat());
+
     return document;
 }
 

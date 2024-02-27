@@ -26,5 +26,13 @@ export interface MetricsPoint {
         cached: number,
         blocked: number,
         dropped: number
-    }
+    },
+    protocols: {
+        udp: number,
+        tcp: number,
+        tls: number,
+        https: number,
+        quic: number
+    },
+    records: Map<string, number>
 };
