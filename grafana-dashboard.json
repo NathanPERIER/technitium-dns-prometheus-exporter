@@ -588,7 +588,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "sum(technitium_dns_request_result_count{server=\"elpain\"})",
+          "expr": "sum(technitium_dns_request_result_count{server=\"$server\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
