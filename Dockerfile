@@ -12,4 +12,4 @@ RUN chmod 777 '/.npm'
 
 ENV TECHNITIUM_EXPORTER_PORT=8080
 
-ENTRYPOINT npm run start
+ENTRYPOINT ["npm", "run", "start"]
